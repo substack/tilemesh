@@ -4,7 +4,8 @@ var through = require('through2')
 var docs = {}
 var mesh = {
   highway: { positions: [], cells: [], angles: [], types: [], ids: [] },
-  boundary: { positions: [], cells: [], angles: [], types: [], ids: [] }
+  boundary: { positions: [], cells: [], angles: [], types: [], ids: [] },
+  natural: { positions: [], cells: [], angles: [], types: [], ids: [] }
 }
 
 var highway = {
@@ -39,6 +40,13 @@ function write (items, enc, next) {
     if (item.refs && item.tags.boundary) {
       for (var j = 0; j < item.refs.length; j++) {
         addLine(mesh.boundary,item)
+        for (var j = 0; j < item.refs.length; j++) {
+          mesh.boundary.types.push(0,0)
+        }
+      }
+    } else if (item.refs && item.tags.natural) {
+      for (var j = 0; j < item.refs.length; j++) {
+        addLine(mesh.natural,item)
         for (var j = 0; j < item.refs.length; j++) {
           mesh.boundary.types.push(0,0)
         }

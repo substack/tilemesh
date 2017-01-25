@@ -8,6 +8,7 @@ var mat4 = require('gl-mat4')
 
 var highway = require('./lib/highway.js')
 var boundary = require('./lib/boundary.js')
+var natural = require('./lib/natural.js')
 var pick = require('./lib/pick.js')(regl)
 
 var camera = require('glsl-proj4-camera')(location.hash.replace(/^#/,'') || `
@@ -21,11 +22,13 @@ camera.on('update', function () {
 
 resl({
   manifest: {
+    /*
     land: {
       type: 'text',
       src: 'hawaii.json',
       parser: JSON.parse
     },
+    */
     data: {
       type: 'text',
       src: '6.json',
@@ -40,28 +43,43 @@ function ready (assets) {
   var draw = {
     highway: highway.draw(regl, assets.data.highway, camera, state),
     boundary: boundary.draw(regl, assets.data.boundary, camera, state),
-    land: land(regl, assets.land)
+    natural: natural.draw(regl, assets.data.natural, camera, state)
+    //land: land(regl, assets.land)
   }
   var click = {
     highway: highway.click(regl, assets.data.highway, camera, state),
-    boundary: boundary.click(regl, assets.data.boundary, camera, state)
+    boundary: boundary.click(regl, assets.data.boundary, camera, state),
+    natural: natural.click(regl, assets.data.natural, camera, state),
   }
   regl.frame(function () {
     regl.clear({ color: [0,0,0,1], depth: true })
-    draw.land()
+    //draw.land()
     draw.highway()
     draw.boundary()
+    draw.natural()
   })
   window.addEventListener('click', function (ev) {
-    var p = pick(click.highway,ev)
-    state.selected[0] = p[0]
-    state.selected[1] = p[1]
+    for (var key in click) {
+      var p = pick(click[key],ev)
+      if (p && p[0]+p[1] > 0) {
+        state.selected[0] = p[0]
+        state.selected[1] = p[1]
+        return
+      }
+      state.selected[0] = 0
+      state.selected[1] = 0
+    }
   })
   window.addEventListener('mousemove', function (ev) {
-    var p = pick(click.highway,ev)
-    if (p) {
-      state.hover[0] = p[0]
-      state.hover[1] = p[1]
+    for (var key in click) {
+      var p = pick(click[key],ev)
+      if (p && p[0]+p[1] > 0) {
+        state.hover[0] = p[0]
+        state.hover[1] = p[1]
+        return
+      }
+      state.hover[0] = 0
+      state.hover[1] = 0
     }
   })
 }
