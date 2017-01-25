@@ -1,4 +1,6 @@
-var regl = require('regl')({ extensions: ['OES_element_index_uint'] })
+var regl = require('regl')({
+  extensions: ['OES_element_index_uint','OES_texture_float']
+})
 var resl = require('resl')
 var glsl = require('glslify')
 var proj = require('glsl-proj4')
@@ -32,14 +34,35 @@ resl({
 })
 
 function ready (assets) {
+  var state = { selected: [0,0] }
   var draw = {
-    highway: highway.draw(regl, assets.data.highway, camera),
+    highway: highway.draw(regl, assets.data.highway, camera, state),
+    highwayClick: highway.click(regl, assets.data.highway, camera, state),
     land: land(regl, assets.land)
   }
   regl.frame(function () {
     regl.clear({ color: [0,0,0,1], depth: true })
     draw.land()
     draw.highway()
+  })
+  var fb = regl.framebuffer({
+    colorFormat: 'rgba',
+    colorType: 'float32'
+  })
+  var data = new Float32Array(4)
+  window.addEventListener('click', function (ev) {
+    regl.clear({ color: [0,0,0,1], depth: true })
+    var x = ev.offsetX
+    var y = window.innerHeight-ev.offsetY
+    if (x < 0 || x >= window.innerWidth) return
+    if (y < 0 || y >= window.innerHeight) return
+    fb.resize(window.innerWidth, window.innerHeight)
+    draw.highwayClick({ framebuffer: fb }, function () {
+      regl.draw()
+      var data = regl.read({ x: x, y: y, width: 1, height: 1, data: data })
+      state.selected[0] = data[0]
+      state.selected[1] = data[1]
+    })
   })
 }
 

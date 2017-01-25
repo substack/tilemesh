@@ -58,7 +58,11 @@ function write (items, enc, next) {
           highway.road
         )
         mesh.highway.types.push(roadtype,roadtype)
-        mesh.highway.ids.push(item.id,item.id)
+        var id = [
+          Math.floor(item.id/Math.pow(2,16)),
+          item.id%Math.pow(2,16)
+        ]
+        mesh.highway.ids.push(id,id)
       }
     }
   }
