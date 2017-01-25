@@ -7,6 +7,7 @@ var proj = require('glsl-proj4')
 var mat4 = require('gl-mat4')
 
 var highway = require('./lib/highway.js')
+var boundary = require('./lib/boundary.js')
 var pick = require('./lib/pick.js')(regl)
 
 var camera = require('glsl-proj4-camera')(location.hash.replace(/^#/,'') || `
@@ -38,15 +39,18 @@ function ready (assets) {
   var state = { selected: [0,0], hover: [0,0] }
   var draw = {
     highway: highway.draw(regl, assets.data.highway, camera, state),
+    boundary: boundary.draw(regl, assets.data.boundary, camera, state),
     land: land(regl, assets.land)
   }
   var click = {
-    highway: highway.click(regl, assets.data.highway, camera, state)
+    highway: highway.click(regl, assets.data.highway, camera, state),
+    boundary: boundary.click(regl, assets.data.boundary, camera, state)
   }
   regl.frame(function () {
     regl.clear({ color: [0,0,0,1], depth: true })
     draw.land()
     draw.highway()
+    draw.boundary()
   })
   window.addEventListener('click', function (ev) {
     var p = pick(click.highway,ev)
