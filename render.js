@@ -52,12 +52,12 @@ function ready (assets) {
   var radius = 15
   var data = new Float32Array(radius*radius*4)
   window.addEventListener('click', function (ev) {
-    regl.clear({ color: [0,0,0,1], depth: true })
     var mx = ev.offsetX
     var my = window.innerHeight-ev.offsetY
     if (mx < 0 || mx >= window.innerWidth) return
     if (my < 0 || my >= window.innerHeight) return
     fb.resize(window.innerWidth, window.innerHeight)
+    regl.clear({ color: [0,0,0,1], depth: true, framebuffer: fb })
     draw.highwayClick({ framebuffer: fb }, function () {
       regl.draw()
       var data = regl.read({
