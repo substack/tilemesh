@@ -1,4 +1,4 @@
-var regl = require('regl')()
+var regl = require('regl')({ extensions: ['OES_element_index_uint'] })
 var resl = require('resl')
 var glsl = require('glslify')
 var proj = require('glsl-proj4')
@@ -93,8 +93,7 @@ function lines (regl, mesh) {
         vec2 adir = vec2(cos(angle),sin(angle))*0.001;
         vec3 np = forward(proj,position+adir)*vec3(1,aspect,1);
         vec3 dir = normalize(np-p);
-        gl_Position = vec4(p+dir*0.002,1);
-        //gl_Position = vec4(p,1);
+        gl_Position = vec4(p+dir*proj.k0*20.0,1);
       }
     `,
     uniforms: Object.assign(camera.members('proj'), {
