@@ -3,7 +3,7 @@ var defined = require('defined')
 var through = require('through2')
 var docs = {}
 var mesh = {
-  highway: { positions: [], cells: [], angles: [], types: [] }
+  highway: { positions: [], cells: [], angles: [], types: [], ids: [] }
 }
 
 var highway = {
@@ -58,6 +58,7 @@ function write (items, enc, next) {
           highway.road
         )
         mesh.highway.types.push(roadtype,roadtype)
+        mesh.highway.ids.push(item.id,item.id)
       }
     }
   }
