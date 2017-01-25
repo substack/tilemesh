@@ -49,19 +49,44 @@ function ready (assets) {
     colorFormat: 'rgba',
     colorType: 'float32'
   })
-  var data = new Float32Array(4)
+  var radius = 15
+  var data = new Float32Array(radius*radius*4)
   window.addEventListener('click', function (ev) {
     regl.clear({ color: [0,0,0,1], depth: true })
-    var x = ev.offsetX
-    var y = window.innerHeight-ev.offsetY
-    if (x < 0 || x >= window.innerWidth) return
-    if (y < 0 || y >= window.innerHeight) return
+    var mx = ev.offsetX
+    var my = window.innerHeight-ev.offsetY
+    if (mx < 0 || mx >= window.innerWidth) return
+    if (my < 0 || my >= window.innerHeight) return
     fb.resize(window.innerWidth, window.innerHeight)
     draw.highwayClick({ framebuffer: fb }, function () {
       regl.draw()
-      var data = regl.read({ x: x, y: y, width: 1, height: 1, data: data })
-      state.selected[0] = data[0]
-      state.selected[1] = data[1]
+      var data = regl.read({
+        x: Math.floor(mx-radius*0.5),
+        y: Math.floor(my-radius*0.5),
+        width: Math.min(window.innerWidth-mx,radius),
+        height: Math.min(window.innerHeight-my,radius),
+        data: data
+      })
+      var samples = {}, maxkey = null, maxv = [0,0]
+      for (var y = 0; y < radius; y++) {
+        for (var x = 0; x < radius; x++) {
+          var d0 = data[x*4+y*4*radius+0]
+          var d1 = data[x*4+y*4*radius+1]
+          if (d0+d1>0) {
+            var key = d0+','+d1
+            var xr = (x-radius*0.5)/radius*2
+            var yr = (y-radius*0.5)/radius*2
+            samples[key] = (samples[key] || 0)
+              + (1-Math.sqrt(xr*xr+yr*yr))
+            if (!maxkey || samples[key] > samples[maxkey]) {
+              maxkey = key
+              maxv = [d0,d1]
+            }
+          }
+        }
+      }
+      state.selected[0] = maxv[0]
+      state.selected[1] = maxv[1]
     })
   })
 }
