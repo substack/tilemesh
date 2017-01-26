@@ -12,8 +12,8 @@ var natural = require('./lib/natural.js')
 var pick = require('./lib/pick.js')(regl)
 
 var camera = require('glsl-proj4-camera')(location.hash.replace(/^#/,'') || `
-  +proj=tmerc +lat_0=18.83333333333333 +lon_0=-155.5 +ellps=GRS80 +units=m
-  +k_0=0.0000019268500651226404 +x_0=0.35589838 +y_0=-0.34185734
+  +proj=tmerc +lat_0=18.83333333333333 +lon_0=-155.5 +ellps=GRS80 +units=m%0A
+  +k_0=0.00002846289167219529 +x_0=-1.0722417692283437 +y_0=-2.16795879646565
 `.trim())
 
 camera.on('update', function () {
@@ -42,21 +42,21 @@ function ready (assets) {
   var state = { selected: [0,0], hover: [0,0] }
   var draw = {
     highway: highway.draw(regl, assets.data.highway, camera, state),
-    boundary: boundary.draw(regl, assets.data.boundary, camera, state),
-    natural: natural.draw(regl, assets.data.natural, camera, state)
-    //land: land(regl, assets.land)
+    //boundary: boundary.draw(regl, assets.data.boundary, camera, state),
+    //natural: natural.draw(regl, assets.data.natural, camera, state),
+    //land: land(regl, assets.land),
   }
   var click = {
     highway: highway.click(regl, assets.data.highway, camera, state),
-    boundary: boundary.click(regl, assets.data.boundary, camera, state),
-    natural: natural.click(regl, assets.data.natural, camera, state),
+    //boundary: boundary.click(regl, assets.data.boundary, camera, state),
+    //natural: natural.click(regl, assets.data.natural, camera, state),
   }
   regl.frame(function () {
-    regl.clear({ color: [0,0,0,1], depth: true })
+    regl.clear({ color: [0.1,0.1,0.1,1], depth: true })
     //draw.land()
     draw.highway()
-    draw.boundary()
-    draw.natural()
+    //draw.boundary()
+    //draw.natural()
   })
   window.addEventListener('click', function (ev) {
     for (var key in click) {
