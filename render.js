@@ -12,8 +12,8 @@ var natural = require('./lib/natural.js')
 var pick = require('./lib/pick.js')(regl)
 
 var camera = require('glsl-proj4-camera')(location.hash.replace(/^#/,'') || `
-  +proj=tmerc +lat_0=18.83333333333333 +lon_0=-155.5 +ellps=GRS80 +units=m%0A
-  +k_0=0.00002846289167219529 +x_0=-1.0722417692283437 +y_0=-2.16795879646565
+  +proj=tmerc +lat_0=18.83333333333333 +lon_0=-155.5 +ellps=GRS80 +units=m%0A%0A
+  +k_0=0.00010994235090283668 +x_0=-5.638931906678166 +y_0=-8.829793624010414
 `.trim())
 
 camera.on('update', function () {
@@ -51,13 +51,15 @@ function ready (assets) {
     //boundary: boundary.click(regl, assets.data.boundary, camera, state),
     //natural: natural.click(regl, assets.data.natural, camera, state),
   }
-  regl.frame(function () {
+  frame()
+  camera.on('update', frame)
+  function frame () {
     regl.clear({ color: [0.1,0.1,0.1,1], depth: true })
     //draw.land()
     draw.highway()
     //draw.boundary()
     //draw.natural()
-  })
+  }
   window.addEventListener('click', function (ev) {
     for (var key in click) {
       var p = pick(click[key],ev)
@@ -69,6 +71,7 @@ function ready (assets) {
       state.selected[0] = 0
       state.selected[1] = 0
     }
+    frame()
   })
   window.addEventListener('mousemove', function (ev) {
     for (var key in click) {
@@ -76,11 +79,12 @@ function ready (assets) {
       if (p && p[0]+p[1] > 0) {
         state.hover[0] = p[0]
         state.hover[1] = p[1]
-        return
+        return frame()
       }
-      state.hover[0] = 0
-      state.hover[1] = 0
     }
+    state.hover[0] = 0
+    state.hover[1] = 0
+    frame()
   })
 }
 
