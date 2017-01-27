@@ -64,6 +64,7 @@ function ready (assets) {
   frame()
   camera.on('update', frame)
   function frame () {
+    regl.poll()
     regl.clear({ color: [0.2,0.2,0.2,1], depth: true })
     //draw.land()
     draw.highway()
@@ -100,7 +101,7 @@ function ready (assets) {
       frame()
     })
   })
-  window.addEventListener('resize', function () { nextTick(frame) })
+  window.addEventListener('resize', frame)
 }
 
 function land (regl, mesh) {
