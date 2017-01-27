@@ -78,7 +78,7 @@ function ready (assets) {
         if (p && p[0]+p[1] > 0) {
           state.selected[0] = p[0]
           state.selected[1] = p[1]
-          return
+          return frame()
         }
         state.selected[0] = 0
         state.selected[1] = 0
@@ -87,19 +87,26 @@ function ready (assets) {
     })
   })
   window.addEventListener('mousemove', function (ev) {
+    var prev
     nextTick(function () {
+      prev = state.hover.slice()
       for (var key in click) {
         var p = pick(click[key],ev)
         if (p && p[0]+p[1] > 0) {
           state.hover[0] = p[0]
           state.hover[1] = p[1]
-          return frame()
+          return check()
         }
       }
       state.hover[0] = 0
       state.hover[1] = 0
-      frame()
+      check()
     })
+    function check () {
+      if (state.hover[0] !== prev[0] || state.hover[1] !== prev[1]) {
+        frame()
+      }
+    }
   })
   window.addEventListener('resize', frame)
 }
