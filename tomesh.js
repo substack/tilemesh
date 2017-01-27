@@ -4,8 +4,9 @@ var through = require('through2')
 var docs = {}
 var mesh = {
   highway: { positions: [], cells: [], angles: [], types: [], ids: [] },
-  boundary: { positions: [], cells: [], angles: [], types: [], ids: [] },
-  natural: { positions: [], cells: [], angles: [], types: [], ids: [] }
+  //boundary: { positions: [], cells: [], angles: [], types: [], ids: [] },
+  //natural: { positions: [], cells: [], angles: [], types: [], ids: [] },
+  labels: {}
 }
 
 var highway = {
@@ -38,19 +39,23 @@ function write (items, enc, next) {
     var item = items[i]
     docs[item.id] = item
     if (item.refs && item.tags.boundary) {
+      /*
       for (var j = 0; j < item.refs.length; j++) {
         addLine(mesh.boundary,item)
         for (var j = 0; j < item.refs.length; j++) {
           mesh.boundary.types.push(0,0)
         }
       }
+      */
     } else if (item.refs && item.tags.natural) {
+      /*
       for (var j = 0; j < item.refs.length; j++) {
         addLine(mesh.natural,item)
         for (var j = 0; j < item.refs.length; j++) {
           mesh.boundary.types.push(0,0)
         }
       }
+      */
     } else if (item.refs && item.tags.highway) {
       addLine(mesh.highway,item)
       var roadtype = defined(
@@ -60,6 +65,7 @@ function write (items, enc, next) {
       for (var j = 0; j < item.refs.length; j++) {
         mesh.highway.types.push(roadtype,roadtype)
       }
+      if (item.tags.name) mesh.labels[item.id] = item.tags.name
     }
   }
   next()

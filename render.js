@@ -5,6 +5,7 @@ var resl = require('resl')
 var glsl = require('glslify')
 var proj = require('glsl-proj4')
 var mat4 = require('gl-mat4')
+var nextTick = require('next-tick')
 
 var highway = require('./lib/highway.js')
 var boundary = require('./lib/boundary.js')
@@ -41,51 +42,65 @@ resl({
 function ready (assets) {
   var state = { selected: [0,0], hover: [0,0] }
   var draw = {
-    highway: highway.draw(regl, assets.data.highway, camera, state),
+    highway: highway.draw(regl, {
+      labels: assets.data.labels,
+      mesh: assets.data.highway,
+      camera: camera,
+      state: state
+    }),
     //boundary: boundary.draw(regl, assets.data.boundary, camera, state),
     //natural: natural.draw(regl, assets.data.natural, camera, state),
     //land: land(regl, assets.land),
   }
   var click = {
-    highway: highway.click(regl, assets.data.highway, camera, state),
+    highway: highway.click(regl, {
+      mesh: assets.data.highway,
+      camera: camera,
+      state: state
+    }),
     //boundary: boundary.click(regl, assets.data.boundary, camera, state),
     //natural: natural.click(regl, assets.data.natural, camera, state),
   }
   frame()
   camera.on('update', frame)
   function frame () {
-    regl.clear({ color: [0.1,0.1,0.1,1], depth: true })
+    regl.clear({ color: [0.2,0.2,0.2,1], depth: true })
     //draw.land()
     draw.highway()
     //draw.boundary()
     //draw.natural()
   }
   window.addEventListener('click', function (ev) {
-    for (var key in click) {
-      var p = pick(click[key],ev)
-      if (p && p[0]+p[1] > 0) {
-        state.selected[0] = p[0]
-        state.selected[1] = p[1]
-        return
+    nextTick(function () {
+      for (var key in click) {
+        var p = pick(click[key],ev)
+        if (p && p[0]+p[1] > 0) {
+          state.selected[0] = p[0]
+          state.selected[1] = p[1]
+          return
+        }
+        state.selected[0] = 0
+        state.selected[1] = 0
       }
-      state.selected[0] = 0
-      state.selected[1] = 0
-    }
-    frame()
+      frame()
+    })
   })
   window.addEventListener('mousemove', function (ev) {
-    for (var key in click) {
-      var p = pick(click[key],ev)
-      if (p && p[0]+p[1] > 0) {
-        state.hover[0] = p[0]
-        state.hover[1] = p[1]
-        return frame()
+    nextTick(function () {
+      for (var key in click) {
+        var p = pick(click[key],ev)
+        if (p && p[0]+p[1] > 0) {
+          state.hover[0] = p[0]
+          state.hover[1] = p[1]
+          return frame()
+        }
       }
-    }
-    state.hover[0] = 0
-    state.hover[1] = 0
-    frame()
+      state.hover[0] = 0
+      state.hover[1] = 0
+      frame()
+    })
   })
+  window.addEventListener('resize', function () { nextTick(frame) })
 }
 
 function land (regl, mesh) {

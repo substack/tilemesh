@@ -7,7 +7,7 @@ vec3 geom (proj_t proj, vec2 pos, vec3 width, float expand, float angle, float a
   vec3 dir = normalize(np-p);
   float rex = sqrt(proj.k0/width.z*300000.0);
   float scale = max(width.x,width.y*proj.k0)
-    + min(0.005,min(sqrt(proj.k0*2.0),expand*rex*step(0.7,rex)));
+    + min(0.01,min(sqrt(proj.k0*2.0),expand*rex*step(0.7,rex)));
   return vec3((p+dir*scale).xy,1.0-1.0/width.z);
 }
 #pragma glslify: export(geom)
