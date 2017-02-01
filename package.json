@@ -1,0 +1,18 @@
+{
+  "dependencies": {
+    "almost-equal": "^1.1.0",
+    "cdt2d": "^1.0.0",
+    "clean-pslg": "^1.1.0",
+    "deep-assign": "^2.0.0",
+    "defined": "^1.0.0",
+    "earcut": "^2.1.1",
+    "gl-vec2": "^1.0.0",
+    "gl-vec3": "^1.0.3",
+    "next-tick": "^1.0.0",
+    "o5m-decode": "^1.1.0",
+    "osm-pbf-parser": "^2.3.0",
+    "planar-dual": "^1.0.2",
+    "to2": "^1.0.0",
+    "vectorize-text": "^3.0.2"
+  }
+}

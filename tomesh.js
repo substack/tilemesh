@@ -65,7 +65,18 @@ function write (items, enc, next) {
       for (var j = 0; j < item.refs.length; j++) {
         mesh.highway.types.push(roadtype,roadtype)
       }
-      if (item.tags.name) mesh.labels[item.id] = item.tags.name
+      if (item.tags.name) {
+        var a = docs[item.refs[Math.floor(item.refs.length/2)]]
+        var b = docs[item.refs[Math.floor(item.refs.length/2)+1]]
+        if (!a || !b) continue
+        var theta = Math.atan2(a[1]-b[1],a[0]-b[0])
+        mesh.labels[item.id] = [
+          item.tags.name,
+          (a.lon+b.lon)*0.5,
+          (a.lat+b.lat)*0.5,
+          theta
+        ]
+      }
     }
   }
   next()
