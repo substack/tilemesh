@@ -73,7 +73,7 @@ function write (items, enc, next) {
         var a = docs[item.refs[Math.floor(item.refs.length/2)]]
         var b = docs[item.refs[Math.floor(item.refs.length/2)+1]]
         if (!a || !b) continue
-        var theta = Math.atan2(a[1]-b[1],a[0]-b[0])
+        var theta = Math.atan2(a.lat-b.lat,a.lon-b.lon)
         mesh.labels[item.id] = [
           item.tags.name,
           (a.lon+b.lon)*0.5,
