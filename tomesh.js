@@ -1,12 +1,16 @@
 var parser = require('osm-pbf-parser')
 var defined = require('defined')
 var through = require('through2')
+var vtext = require('vectorize-text')
+var Canvas = require('canvas')
+
 var docs = {}
 var mesh = {
   highway: { positions: [], cells: [], angles: [], types: [], ids: [] },
   //boundary: { positions: [], cells: [], angles: [], types: [], ids: [] },
   //natural: { positions: [], cells: [], angles: [], types: [], ids: [] },
-  labels: {}
+  labels: {},
+  characters: {}
 }
 
 var highway = {
@@ -76,6 +80,7 @@ function write (items, enc, next) {
           (a.lat+b.lat)*0.5,
           theta
         ]
+        addString(mesh,item.tags.name)
       }
     }
   }
@@ -111,4 +116,16 @@ function addLine (mesh, item) {
     ]
     mesh.ids.push(id,id)
   }
+}
+
+function addString (mesh, str) {
+  var chars = str.split('')
+  var canvas = new Canvas(8192,1024)
+  var ctx = canvas.getContext('2d')
+  chars.forEach(function (c) {
+    if (mesh.characters[c]) return
+    mesh.characters[c] = vtext(c, {
+      canvas: canvas, context: ctx, triangulate: true
+    })
+  })
 }

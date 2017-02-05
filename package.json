@@ -14,5 +14,8 @@
     "planar-dual": "^1.0.2",
     "to2": "^1.0.0",
     "vectorize-text": "^3.0.2"
+  },
+  "browserify": {
+    "transform": [ "glslify" ]
   }
 }

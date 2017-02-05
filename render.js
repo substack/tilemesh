@@ -44,6 +44,7 @@ function ready (assets) {
   var draw = {
     highway: highway.draw(regl, {
       labels: assets.data.labels,
+      characters: assets.data.characters,
       mesh: assets.data.highway,
       camera: camera,
       state: state
