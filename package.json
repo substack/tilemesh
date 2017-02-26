@@ -18,6 +18,7 @@
     "once": "^1.4.0",
     "osm-pbf-parser": "^2.3.0",
     "planar-dual": "^1.0.2",
+    "proj4": "^2.3.17",
     "pump": "^1.0.2",
     "to2": "^1.0.0",
     "vectorize-text": "^3.0.2",

@@ -1,6 +1,6 @@
 {
   "browserify": { "transform": [ "glslify" ] },
   "scripts": {
-    "start": "budo render.js"
+    "start": "budo render.js -d . --cors"
   }
 }

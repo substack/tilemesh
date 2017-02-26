@@ -6,15 +6,39 @@ var glsl = require('glslify')
 var proj = require('glsl-proj4')
 var mat4 = require('gl-mat4')
 var nextTick = require('next-tick')
+var overlap = require('../lib/overlap.js')
 
-var camera = require('glsl-proj4-camera')(location.hash.replace(/^#/,'') || `
-  +proj=tmerc +lat_0=18.83333333333333 +lon_0=-155.5 +ellps=GRS80 +units=m%0A%0A
+var proj = require('proj4')
+var projstr = location.hash.replace(/^#/,'') || `
+  +proj=tmerc +lat_0=18.83333333333333 +lon_0=-155.5 +ellps=GRS80 +units=m
   +k_0=0.00010994235090283668 +x_0=-5.638931906678166 +y_0=-8.829793624010414
-`.trim())
+`.trim()
+var camera = require('glsl-proj4-camera')(projstr)
+var listFiles = require('../files.js')
+listFiles(viewbox(projstr), onlist)
 
 camera.on('update', function () {
-  location.hash = camera.string()
+  var pstr = camera.string()
+  location.hash = pstr
+  var box = viewbox(pstr)
+  listFiles(box, onlist)
 })
+
+function onlist (err, files) {
+  console.log('list',JSON.stringify(files))
+}
+
+function viewbox (projstr) {
+  var sw = proj(projstr,'+proj=longlat +datum=WGS84',[-1,-1])
+  var se = proj(projstr,'+proj=longlat +datum=WGS84',[+1,-1])
+  var nw = proj(projstr,'+proj=longlat +datum=WGS84',[-1,+1])
+  var ne = proj(projstr,'+proj=longlat +datum=WGS84',[+1,+1])
+  var w = Math.min(sw[0],nw[0])
+  var s = Math.min(sw[1],se[1])
+  var e = Math.max(sw[0],nw[0])
+  var n = Math.max(nw[1],ne[1])
+  return [w,s,e,n]
+}
 
 /*
 var draw = require('../draw.js')({
