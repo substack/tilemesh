@@ -1,8 +1,7 @@
 var parser = require('osm-pbf-parser')
 var defined = require('defined')
 var through = require('through2')
-var vtext = require('vectorize-text')
-var Canvas = require('canvas')
+var vtext = require('vector-text-atlas')
 var dup = require('duplexify')
 var pump = require('pump')
 
@@ -28,7 +27,7 @@ var highway = {
   path: 19
 }
 
-module.exports = function (cb) {
+module.exports = function (opts, cb) {
   var docs = {}
   var mesh = {
     highway: { positions: [], cells: [], angles: [], types: [], ids: [] },
@@ -37,6 +36,7 @@ module.exports = function (cb) {
     labels: {},
     characters: {}
   }
+  var vt = vtext({ canvas: opts.canvas })
   var d = dup()
   var p = parser()
   d.setWritable(p)
@@ -85,13 +85,14 @@ module.exports = function (cb) {
             (a.lat+b.lat)*0.5,
             theta
           ]
-          addString(mesh,item.tags.name)
+          vt.add(item.tags.name)
         }
       }
     }
     next()
   }
   function end () {
+    mesh.characters = vt.data('array')
     if (cb) cb(null, mesh)
   }
   function addLine (mesh, item) {
@@ -122,15 +123,4 @@ module.exports = function (cb) {
 
 function angle (x) {
   return (x + Math.PI*4)%(2*Math.PI)
-}
-function addString (mesh, str) {
-  var chars = str.split('')
-  var canvas = new Canvas(8192,1024)
-  var ctx = canvas.getContext('2d')
-  chars.forEach(function (c) {
-    if (mesh.characters[c]) return
-    mesh.characters[c] = vtext(c, {
-      canvas: canvas, context: ctx, triangulate: true
-    })
-  })
 }

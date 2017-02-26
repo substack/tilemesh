@@ -1,0 +1,6 @@
+{
+  "browserify": { "transform": [ "glslify" ] },
+  "scripts": {
+    "start": "budo render.js"
+  }
+}
