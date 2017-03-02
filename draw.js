@@ -1,66 +1,25 @@
-var regl = require('regl')({
-  extensions: ['OES_element_index_uint','OES_texture_float']
-})
-var resl = require('resl')
-var glsl = require('glslify')
-var proj = require('glsl-proj4')
-var mat4 = require('gl-mat4')
-var nextTick = require('next-tick')
-
-var highway = require('./lib/highway.js')
-var boundary = require('./lib/boundary.js')
-var natural = require('./lib/natural.js')
-var pick = require('./lib/pick.js')(regl)
-
-var camera = require('glsl-proj4-camera')(location.hash.replace(/^#/,'') || `
-  +proj=tmerc +lat_0=18.83333333333333 +lon_0=-155.5 +ellps=GRS80 +units=m%0A%0A
-  +k_0=0.00010994235090283668 +x_0=-5.638931906678166 +y_0=-8.829793624010414
-`.trim())
-
-camera.on('update', function () {
-  location.hash = camera.string()
-})
-
-resl({
-  manifest: {
-    /*
-    land: {
-      type: 'text',
-      src: 'hawaii.json',
-      parser: JSON.parse
-    },
-    */
-    data: {
-      type: 'text',
-      src: '6.json',
-      parser: JSON.parse
-    }
-  },
-  onDone: ready
-})
-
-function ready (assets) {
+module.exports = function (data) {
   var state = { selected: [0,0], hover: [0,0] }
   var draw = {
     highway: highway.draw(regl, {
-      labels: assets.data.labels,
-      characters: assets.data.characters,
-      mesh: assets.data.highway,
+      labels: data.labels,
+      characters: data.characters,
+      mesh: data.highway,
       camera: camera,
       state: state
     }),
-    //boundary: boundary.draw(regl, assets.data.boundary, camera, state),
-    //natural: natural.draw(regl, assets.data.natural, camera, state),
-    //land: land(regl, assets.land),
+    //boundary: boundary.draw(regl, data.boundary, camera, state),
+    //natural: natural.draw(regl, data.natural, camera, state),
+    //land: land(regl, land),
   }
   var click = {
     highway: highway.click(regl, {
-      mesh: assets.data.highway,
+      mesh: data.highway,
       camera: camera,
       state: state
     }),
-    //boundary: boundary.click(regl, assets.data.boundary, camera, state),
-    //natural: natural.click(regl, assets.data.natural, camera, state),
+    //boundary: boundary.click(regl, data.boundary, camera, state),
+    //natural: natural.click(regl, data.natural, camera, state),
   }
   frame()
   camera.on('update', frame)

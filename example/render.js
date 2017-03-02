@@ -14,6 +14,9 @@ var projstr = location.hash.replace(/^#/,'') || `
   +k_0=0.00010994235090283668 +x_0=-5.638931906678166 +y_0=-8.829793624010414
 `.trim()
 var camera = require('glsl-proj4-camera')(projstr)
+var draw = require('../draw.js')({
+})
+
 var listFiles = require('../files.js')
 listFiles(viewbox(projstr), onlist)
 
@@ -21,11 +24,25 @@ camera.on('update', function () {
   var pstr = camera.string()
   location.hash = pstr
   var box = viewbox(pstr)
+  frame()
   listFiles(box, onlist)
 })
 
+function frame () {
+  regl.poll()
+  regl.clear({ color: [0.2,0.2,0.2,1], depth: true })
+  draw()
+}
+
 function onlist (err, files) {
-  console.log('list',JSON.stringify(files))
+  console.log(files)
+  files.forEach(function (file) {
+    var jfile = file.replace(/\.o5m\.gz$/,'.json')
+    xhr(file, function (err, res, body) {
+      var data = JSON.parse(body)
+      console.log(data)
+    })
+  })
 }
 
 function viewbox (projstr) {
@@ -41,20 +58,6 @@ function viewbox (projstr) {
 }
 
 /*
-var draw = require('../draw.js')({
-})
-
-resl({
-  manifest: {
-    data: {
-      type: 'text',
-      src: '6.json',
-      parser: JSON.parse
-    }
-  },
-  onDone: ready
-})
-
 function ready (assets) {
   var state = { selected: [0,0], hover: [0,0] }
   var draw = {

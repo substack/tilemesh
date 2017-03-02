@@ -1,7 +1,9 @@
 var parser = require('osm-pbf-parser')
 var defined = require('defined')
 var through = require('through2')
-var vtext = require('vector-text-atlas')
+var vtatlas = require('vector-text-atlas')
+var vtext = require('vectorize-text')
+var cdt = require('cdt2d')
 var dup = require('duplexify')
 var pump = require('pump')
 
@@ -36,7 +38,11 @@ module.exports = function (opts, cb) {
     labels: {},
     characters: {}
   }
-  var vt = vtext({ canvas: opts.canvas })
+  var vt = vtatlas({
+    canvas: opts.canvas,
+    vtext: vtext,
+    cdt: cdt
+  })
   var d = dup()
   var p = parser()
   d.setWritable(p)
