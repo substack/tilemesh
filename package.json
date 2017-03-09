@@ -2,6 +2,7 @@
   "name": "tilemesh",
   "version": "1.0.0",
   "bin": "bin/cmd.js",
+  "browserify": { "transform": [ "glslify" ] },
   "dependencies": {
     "almost-equal": "^1.1.0",
     "bounding-box-overlap-test": "^1.0.0",

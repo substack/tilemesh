@@ -1,4 +1,6 @@
-module.exports = function (data) {
+var highway = require('./lib/highway.js')
+
+module.exports = function (regl, camera, data) {
   var state = { selected: [0,0], hover: [0,0] }
   var draw = {
     highway: highway.draw(regl, {
@@ -21,16 +23,7 @@ module.exports = function (data) {
     //boundary: boundary.click(regl, data.boundary, camera, state),
     //natural: natural.click(regl, data.natural, camera, state),
   }
-  frame()
-  camera.on('update', frame)
-  function frame () {
-    regl.poll()
-    regl.clear({ color: [0.2,0.2,0.2,1], depth: true })
-    //draw.land()
-    draw.highway()
-    //draw.boundary()
-    //draw.natural()
-  }
+  /*
   window.addEventListener('click', function (ev) {
     nextTick(function () {
       for (var key in click) {
@@ -68,7 +61,10 @@ module.exports = function (data) {
       }
     }
   })
-  window.addEventListener('resize', frame)
+  */
+  return function () {
+    draw.highway()
+  }
 }
 
 function land (regl, mesh) {

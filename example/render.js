@@ -7,6 +7,7 @@ var proj = require('glsl-proj4')
 var mat4 = require('gl-mat4')
 var nextTick = require('next-tick')
 var overlap = require('../lib/overlap.js')
+var xhr = require('xhr')
 
 var proj = require('proj4')
 var projstr = location.hash.replace(/^#/,'') || `
@@ -14,8 +15,8 @@ var projstr = location.hash.replace(/^#/,'') || `
   +k_0=0.00010994235090283668 +x_0=-5.638931906678166 +y_0=-8.829793624010414
 `.trim()
 var camera = require('glsl-proj4-camera')(projstr)
-var draw = require('../draw.js')({
-})
+var draws = []
+var tilemesh = require('../draw.js')
 
 var listFiles = require('../files.js')
 listFiles(viewbox(projstr), onlist)
@@ -27,22 +28,36 @@ camera.on('update', function () {
   frame()
   listFiles(box, onlist)
 })
+window.addEventListener('resize', frame)
 
 function frame () {
   regl.poll()
   regl.clear({ color: [0.2,0.2,0.2,1], depth: true })
-  draw()
+  for (var i = 0; i < draws.length; i++) draws[i].draw()
 }
 
 function onlist (err, files) {
-  console.log(files)
+  var newdraws = []
+  var pending = files.length
   files.forEach(function (file) {
+    file = '/data/'+(new URL(file)).pathname.split('/').slice(3).join('/')
     var jfile = file.replace(/\.o5m\.gz$/,'.json')
-    xhr(file, function (err, res, body) {
+    for (var i = 0; i < draws.length; i++) {
+      if (draws[i].file === jfile) {
+        newdraws.push(draws[i])
+        if (--pending === 0) done()
+        return
+      }
+    }
+    xhr(jfile, function (err, res, body) {
       var data = JSON.parse(body)
-      console.log(data)
+      newdraws.push({ file: jfile, draw: tilemesh(regl, camera, data) })
+      if (--pending === 0) done()
     })
   })
+  function done () {
+    draws = newdraws
+  }
 }
 
 function viewbox (projstr) {

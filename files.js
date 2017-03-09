@@ -14,11 +14,11 @@ function files (href,viewbox,cb) {
   var results = []
   if (cache[href]) process(cache[href])
   else if (cache[href] === null) {
-    cb(null, href + '.o5m.gz')
+    cb(null, [href + '.o5m.gz'])
   } else xhr(href+'/meta.json', function (err,res,body) {
     if (err || res.statusCode === 404) {
       cache[href] = null
-      cb(null, href + '.o5m.gz')
+      cb(null, [href + '.o5m.gz'])
     } else process(JSON.parse(body))
   })
   function process (meta) {
