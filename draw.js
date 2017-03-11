@@ -1,12 +1,12 @@
-var highway = require('./lib/highway.js')
+var roads = require('./lib/roads.js')
 
 module.exports = function (regl, camera, data) {
   var state = { selected: [0,0], hover: [0,0] }
   var draw = {
-    highway: highway.draw(regl, {
+    roads: roads.draw(regl, {
       labels: data.labels,
       characters: data.characters,
-      mesh: data.highway,
+      mesh: data.roads,
       camera: camera,
       state: state
     }),
@@ -15,8 +15,8 @@ module.exports = function (regl, camera, data) {
     //land: land(regl, land),
   }
   var click = {
-    highway: highway.click(regl, {
-      mesh: data.highway,
+    roads: roads.click(regl, {
+      mesh: data.roads,
       camera: camera,
       state: state
     }),
@@ -63,7 +63,7 @@ module.exports = function (regl, camera, data) {
   })
   */
   return function () {
-    draw.highway()
+    draw.roads()
   }
 }
 
