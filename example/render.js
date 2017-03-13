@@ -31,11 +31,12 @@ camera.on('update', function () {
   listFiles(box, onlist)
 })
 window.addEventListener('resize', frame)
+var opts = { labels: false }
 
 function frame () {
   regl.poll()
   regl.clear({ color: [0.2,0.2,0.2,1], depth: true })
-  for (var i = 0; i < draws.length; i++) draws[i].draw()
+  for (var i = 0; i < draws.length; i++) draws[i].draw(opts)
 }
 
 function onlist (err, files, cb) {

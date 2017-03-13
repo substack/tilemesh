@@ -62,8 +62,8 @@ module.exports = function (regl, camera, data) {
     }
   })
   */
-  return function () {
-    draw.roads()
+  return function (props) {
+    draw.roads(props)
   }
 }
 
