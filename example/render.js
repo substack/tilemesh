@@ -25,12 +25,21 @@ listFiles(viewbox(projstr), function (err, files) {
   onlist(err, files, frame)
 })
 
+var updating = null
 camera.on('update', function () {
-  var pstr = camera.string()
-  location.hash = pstr
-  var box = viewbox(pstr)
   frame()
-  listFiles(box, onlist)
+  if (updating) return
+  updating = setTimeout(function () {
+    var pstr = camera.string()
+    location.hash = pstr
+    var box = viewbox(pstr)
+    listFiles(box, function (err, files) {
+      onlist(err, files, function (err) {
+        updating = null
+        frame()
+      })
+    })
+  }, 500)
 })
 window.addEventListener('resize', frame)
 var opts = { labels: false }
@@ -42,6 +51,7 @@ function frame () {
 }
 
 function onlist (err, files, cb) {
+  if (err) return cb(err)
   var newdraws = []
   var pending = files.length
   files.forEach(function (file) {
