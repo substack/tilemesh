@@ -16,7 +16,9 @@ var projstr = location.hash.replace(/^#/,'') || `
 `.trim()
 var camera = require('glsl-proj4-camera')(projstr)
 var draws = []
-var tilemesh = require('../draw.js')
+var tilemesh = require('../draw.js')(regl, {
+  uniforms: camera.members('proj')
+})
 
 var listFiles = require('../files.js')
 listFiles(viewbox(projstr), function (err, files) {
@@ -54,7 +56,7 @@ function onlist (err, files, cb) {
     }
     xhr(jfile, function (err, res, body) {
       var data = JSON.parse(body)
-      newdraws.push({ file: jfile, draw: tilemesh(regl, camera, data) })
+      newdraws.push({ file: jfile, draw: tilemesh(data) })
       if (--pending === 0) done()
     })
   })
