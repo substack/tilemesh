@@ -7,27 +7,7 @@ var cdt = require('cdt2d')
 var dup = require('duplexify')
 var pump = require('pump')
 
-var highway = {
-  motorway: 1,
-  trunk: 2,
-  primary: 3,
-  secondary: 4,
-  tertiary: 5,
-  unclassified: 6,
-  residential: 7,
-  service: 8,
-  living_street: 9,
-  pedestrian: 10,
-  track: 11,
-  bus_guideway: 12,
-  escape: 13,
-  raceway: 14,
-  road: 15,
-  footway: 16,
-  bridleway: 17,
-  steps: 18,
-  path: 19
-}
+var highway = require('./types/highway.json')
 
 module.exports = function (opts, cb) {
   var docs = {}
