@@ -6,6 +6,7 @@ load () {
     | jsonstream query.pages.*.revisions.0 | json 0.\*
 }
 
+echo category,type
 load Map_Features \
   | sed '0,/^== Primary features/ d; 0,/^$/ {/^{{Map_Features:/ !d
       s/^{{Map_Features://; s/}}$// p}; d' \

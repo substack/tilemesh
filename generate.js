@@ -6,15 +6,41 @@ var vtext = require('vectorize-text')
 var cdt = require('cdt2d')
 var dup = require('duplexify')
 var pump = require('pump')
+var isArea = require('id-area-keys').isArea
 
 var highway = require('./types/highway.json')
 
 module.exports = function (opts, cb) {
   var docs = {}
-  var mesh = {
-    roads: { positions: [], cells: [], angles: [], types: [], ids: [] },
-    //boundary: { positions: [], cells: [], angles: [], types: [], ids: [] },
-    //natural: { positions: [], cells: [], angles: [], types: [], ids: [] },
+  var data = {
+    points: {
+      positions: [],
+      id: [],
+      type: []
+    },
+    lines: {
+      positions: [],
+      id: [],
+      index: [],
+      distance: [],
+      type: [],
+      normal: []
+    },
+    areas: {
+      positions: [],
+      cells: [],
+      id: [],
+      index: [],
+      type: []
+    },
+    outlines: {
+      positions: [],
+      id: [],
+      index: [],
+      distance: [],
+      type: [],
+      normal: []
+    },
     labels: {},
     characters: {}
   }
@@ -33,66 +59,55 @@ module.exports = function (opts, cb) {
     for (var i = 0; i < items.length; i++) {
       var item = items[i]
       docs[item.id] = item
-      if (item.refs && item.tags.boundary) {
-        // ...
-      } else if (item.refs && item.tags.natural) {
-        // ...
-      } else if (item.refs && item.tags.highway) {
-        addLine(mesh.roads,item)
-        var roadtype = defined(
-          highway[item.tags.highway],
-          highway[item.tags.highway+'_link'],
-          highway.road)
-        for (var j = 0; j < item.refs.length; j++) {
-          mesh.roads.types.push(roadtype,roadtype)
-        }
-        if (item.tags.name) {
-          var a = docs[item.refs[Math.floor(item.refs.length/2)]]
-          var b = docs[item.refs[Math.floor(item.refs.length/2)+1]]
-          if (!a || !b) continue
-          var theta = Math.atan2(a.lat-b.lat,a.lon-b.lon)
-          mesh.labels[item.id] = [
-            item.tags.name,
-            (a.lon+b.lon)*0.5,
-            (a.lat+b.lat)*0.5,
-            theta
-          ]
-          vt.add(item.tags.name)
-        }
+      if (item.refs && isArea(item)) {
+        addArea(data,docs,item)
+      } else if (item.refs) {
+        addLine(data,docs,item)
+      } else if (item.type === 'node') {
+        addPoint(data,docs,item)
+      }
+      if (item.tags.name) {
+        var a = docs[item.refs[Math.floor(item.refs.length/2)]]
+        var b = docs[item.refs[Math.floor(item.refs.length/2)+1]]
+        if (!a || !b) continue
+        var theta = Math.atan2(a.lat-b.lat,a.lon-b.lon)
+        data.labels[item.id] = [
+          item.tags.name,
+          (a.lon+b.lon)*0.5,
+          (a.lat+b.lat)*0.5,
+          theta
+        ]
+        vt.add(item.tags.name)
       }
     }
     next()
   }
   function end () {
-    mesh.characters = vt.data('array')
-    if (cb) cb(null, mesh)
-  }
-  function addLine (mesh, item) {
-    for (var j = 0; j < item.refs.length; j++) {
-      var ref = item.refs[j]
-      var pt = [docs[ref].lon,docs[ref].lat]
-      mesh.positions.push(pt,pt)
-      var n = mesh.positions.length
-      if (j > 0) {
-        mesh.cells.push([n-1,n-2,n-3])
-        mesh.cells.push([n-2,n-4,n-3])
-      }
-      var pref = defined(item.refs[j-1],ref)
-      var ppt = [docs[pref].lon,docs[pref].lat]
-      var nref = defined(item.refs[j+1],ref)
-      var npt = [docs[nref].lon,docs[nref].lat]
-      var theta = Math.atan2(npt[1]-ppt[1],npt[0]-ppt[0])
-      mesh.angles.push(angle(theta+Math.PI/2))
-      mesh.angles.push(angle(theta-Math.PI/2))
-      var id = [
-        Math.floor(item.id/Math.pow(2,23)),
-        item.id%Math.pow(2,23)
-      ]
-      mesh.ids.push(id,id)
-    }
+    data.characters = vt.data('array')
+    if (cb) cb(null, data)
   }
 }
 
+var pt0 = [0,0], pt1 = [0,0]
+function addLine (data, docs, item) {
+  for (var j = 0; j < item.refs.length; j++) {
+    var ref = item.refs[j]
+    var nref = defined(item.refs[j+1],ref)
+    pt0[0] = docs[ref].lon
+    pt0[1] = docs[ref].lat
+    pt1[0] = docs[nref].lon
+    pt1[1] = docs[nref].lat
+    mesh.positions.push(pt0,pt1,pt0,pt1)
+    var theta = Math.atan2(npt[1]-ppt[1],npt[0]-ppt[0])
+    mesh.angles.push(angle(theta+Math.PI/2))
+    mesh.angles.push(angle(theta-Math.PI/2))
+    var id = [
+      Math.floor(item.id/Math.pow(2,23)),
+      item.id%Math.pow(2,23)
+    ]
+    mesh.ids.push(id,id)
+  }
+}
 function angle (x) {
   return (x + Math.PI*4)%(2*Math.PI)
 }
