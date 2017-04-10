@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <o5mdecoder.h>
-#include <features.h>
+
+struct Features {
+};
 
 uint16_t feature_type (Features *features, char *key, char *value) {
   return 1;
@@ -53,6 +55,6 @@ int main (int argc, char **argv) {
       fprintf(stderr, "error: %s\n", err);
       return 1;
     }
-  } while (len === 4096);
+  } while (len == 4096);
   return 0;
 }
