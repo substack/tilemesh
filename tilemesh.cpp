@@ -1,59 +1,44 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <map>
 #include <o5mdecoder.h>
+#include <tilemesh_features.h>
 
-struct Features {
-};
-
-uint16_t feature_type (Features *features, char *key, char *value) {
-  return 1;
-}
+struct Point { float lon, lat; };
 
 int main (int argc, char **argv) {
+
   char *data = (char*) malloc(4096);
   char *dbuf = (char*) malloc(4096);
-  char *key, *value;
-  o5mdecoder::Decoder d(dbuf);
-  o5mdecoder::Node node;
-  o5mdecoder::Way way;
-  o5mdecoder::Rel rel;
-  Features *features;
+  char *table = (char*) malloc(256*15000);
+  o5mdecoder::Decoder d(dbuf,table);
+  uint64_t ref;
+  std::map<uint64_t,Point> nodes;
+  std::map<uint64_t,Point>::const_iterator ipt;
+  Point *pt;
+
   size_t len;
-  uint16_t type;
   do {
     len = fread(data, sizeof(char), 4096, stdin);
     d.write(data, len);
     try {
-      while (d.read(&node, &way, &rel)) {
-        if (d.type == o5mdecoder::NODE) {
-          while (node.getTag(&key, &value)) {
-            type = feature_type(features, key, value);
-            if (type > 0) {
-              printf("node,%u\n", type);
-              break;
-            }
+      while (d.read()) {
+        if (d.node) {
+          pt = &(nodes[d.node->id]);
+          pt->lon = d.node->lon;
+          pt->lat = d.node->lat;
+        } else if (d.way) {
+          while (d.way->getRef(&ref)) {
+            ipt = nodes.find(ref);
+            if (ipt == nodes.end()) continue;
+            printf("%f,%f ", ipt->second.lon, ipt->second.lat);
           }
-        } else if (d.type == o5mdecoder::WAY) {
-          while (way.getTag(&key, &value)) {
-            type = feature_type(features, key, value);
-            if (type > 0) {
-              printf("way,%u\n", type);
-              break;
-            }
-          }
-        } else if (d.type == o5mdecoder::REL) {
-          while (rel.getTag(&key, &value)) {
-            type = feature_type(features, key, value);
-            if (type > 0) {
-              printf("rel,%u\n", type);
-              break;
-            }
-          }
+          printf("\n");
         }
       }
     } catch (char *err) {
-      fprintf(stderr, "error: %s\n", err);
-      return 1;
+      printf("error: %s\n", err);
     }
   } while (len == 4096);
   return 0;
