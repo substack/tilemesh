@@ -7,7 +7,7 @@ process.stdin.pipe(csv())
   .pipe(process.stdout)
 
 function enumc () {
-  var n = 0, cat = null
+  var n = 1, cat = null
   var stream = through.obj(write, end)
   stream.push('const enum features {')
   return stream
