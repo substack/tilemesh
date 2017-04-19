@@ -138,7 +138,7 @@ size_t find_feature (Features *features, o5mdecoder::Doc *doc) {
   }
   return 0;
 }
-struct Writer {
+struct o5mWriter {
   char *data, *dbuf, *table;
   o5mdecoder::Decoder *decoder;
   uint64_t ref;
@@ -154,7 +154,7 @@ struct Writer {
   tilemesh::List<tilemesh::Position> *poslist;
   tilemesh::List<tilemesh::Position> *aplist;
   tilemesh::List<tilemesh::Cell> *aclist;
-  Writer () {
+  o5mWriter () {
     dbuf = (char*) malloc(16384);
     table = (char*) malloc(256*15000);
     decoder = new o5mdecoder::Decoder(dbuf,16384,table);
@@ -194,6 +194,9 @@ struct Writer {
         }
       }
     }
+  }
+  bool read (char *data, size_t len, size_t *outlen) {
+    return false;
   }
 };
 };
