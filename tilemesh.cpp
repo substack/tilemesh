@@ -4,36 +4,7 @@
 #include <map>
 #include <o5mdecoder.h>
 #include <tilemesh.h>
-#include <tilemesh_features.h>
 #include <string.h>
-
-static char tmp[256];
-
-size_t tilemesh_find_feature (TilemeshFeatures *features, char *key, char *value) {
-  TilemeshFeaturesIterator ti;
-  size_t i,j;
-  for (i = 0; key[i] != 0; i++) tmp[i] = key[i];
-  tmp[i++] = '.';
-  for (j = 0; value[j] != 0; j++) tmp[i++] = value[j];
-  tmp[i++] = 0;
-  ti = features->find(tmp);
-  if (ti == features->end()) {
-    ti = features->find(key);
-    if (ti == features->end()) return 0;
-    else return ti->second;
-  }
-  return ti->second;
-}
-
-size_t find_feature (TilemeshFeatures *features, o5mdecoder::Doc *doc) {
-  size_t ftype;
-  char *key, *value;
-  while (doc->getTag(&key,&value)) {
-    ftype = tilemesh_find_feature(features, key, value);
-    if (ftype > 0) return ftype;
-  }
-  return 0;
-}
 
 int main (int argc, char **argv) {
   char *data = (char*) malloc(4096);
@@ -42,20 +13,20 @@ int main (int argc, char **argv) {
   o5mdecoder::Decoder d(dbuf,16384,table);
 
   uint64_t ref;
-  std::map<uint64_t,Tilemesh::Position*> nodes;
-  std::map<uint64_t,Tilemesh::Position*>::const_iterator ipt;
+  std::map<uint64_t,tilemesh::Position*> nodes;
+  std::map<uint64_t,tilemesh::Position*>::const_iterator ipt;
 
-  TilemeshFeatures features;
-  tilemesh_load_features(&features);
-  Tilemesh::Data tdata;
-  Tilemesh::Position *pos;
-  Tilemesh::Point *pt;
-  Tilemesh::Area *area;
-  Tilemesh::Line *line;
-  Tilemesh::Outline *outline;
-  Tilemesh::List<Tilemesh::Position> *poslist;
-  Tilemesh::List<Tilemesh::Position> *aplist;
-  Tilemesh::List<Tilemesh::Cell> *aclist;
+  tilemesh::Features features;
+  tilemesh::load_features(&features);
+  tilemesh::Data tdata;
+  tilemesh::Position *pos;
+  tilemesh::Point *pt;
+  tilemesh::Area *area;
+  tilemesh::Line *line;
+  tilemesh::Outline *outline;
+  tilemesh::List<tilemesh::Position> *poslist;
+  tilemesh::List<tilemesh::Position> *aplist;
+  tilemesh::List<tilemesh::Cell> *aclist;
 
   size_t len, ftype;
   do {
@@ -64,14 +35,15 @@ int main (int argc, char **argv) {
     try {
       while (d.read()) {
         if (d.node) {
-          pt = new Tilemesh::Point(d.node->id, find_feature(&features, d.node),
+          pt = new tilemesh::Point(d.node->id,
+            tilemesh::find_feature(&features, d.node),
             d.node->lon, d.node->lat);
           tdata.points.push(pt);
-          pos = new Tilemesh::Position(d.node->lon, d.node->lat);
+          pos = new tilemesh::Position(d.node->lon, d.node->lat);
           nodes[d.node->id] = pos;
         } else if (d.way) {
-          ftype = find_feature(&features, d.way);
-          poslist = new Tilemesh::List<Tilemesh::Position>;
+          ftype = tilemesh::find_feature(&features, d.way);
+          poslist = new tilemesh::List<tilemesh::Position>;
           while (d.way->getRef(&ref)) {
             ipt = nodes.find(ref);
             if (ipt == nodes.end()) continue;
@@ -79,15 +51,15 @@ int main (int argc, char **argv) {
           }
           if (poslist->length >= 2
           && poslist->first->data == poslist->last->data) { // closed, area
-            outline = new Tilemesh::Outline(d.way->id, ftype, poslist);
+            outline = new tilemesh::Outline(d.way->id, ftype, poslist);
             tdata.outlines.push(outline);
-            aplist = new Tilemesh::List<Tilemesh::Position>;
-            aclist = new Tilemesh::List<Tilemesh::Cell>;
-            Tilemesh::triangulate(aplist,aclist,poslist);
-            area = new Tilemesh::Area(d.way->id, ftype, aplist, aclist);
+            aplist = new tilemesh::List<tilemesh::Position>;
+            aclist = new tilemesh::List<tilemesh::Cell>;
+            tilemesh::triangulate(aplist,aclist,poslist);
+            area = new tilemesh::Area(d.way->id, ftype, aplist, aclist);
             tdata.areas.push(area);
           } else { // open, line
-            line = new Tilemesh::Line(d.way->id, ftype, poslist);
+            line = new tilemesh::Line(d.way->id, ftype, poslist);
             tdata.lines.push(line);
           }
         }

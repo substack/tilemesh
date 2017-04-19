@@ -1,6 +1,10 @@
-namespace Tilemesh {
+#include <o5mdecoder.h>
+#include <tilemesh_features.h>
+
+namespace tilemesh {
   const char magic[10] = "TILEMESH\n";
   const char version[256] = "1.0.0\n";
+  static char tmp[256];
   template<class T> struct ListItem {
     T *data;
     ListItem<T> *next;
@@ -103,5 +107,29 @@ namespace Tilemesh {
   void triangulate (List<Position> *outplist, List<Cell> *outclist,
   List<Position> *inplist) {
     // TODO
+  }
+  size_t find_feature_kv (tilemesh::Features *features, char *key, char *value) {
+    tilemesh::FeaturesIterator ti;
+    size_t i,j;
+    for (i = 0; key[i] != 0; i++) tmp[i] = key[i];
+    tmp[i++] = '.';
+    for (j = 0; value[j] != 0; j++) tmp[i++] = value[j];
+    tmp[i++] = 0;
+    ti = features->find(tmp);
+    if (ti == features->end()) {
+      ti = features->find(key);
+      if (ti == features->end()) return 0;
+      else return ti->second;
+    }
+    return ti->second;
+  }
+  size_t find_feature (Features *features, o5mdecoder::Doc *doc) {
+    size_t ftype;
+    char *key, *value;
+    while (doc->getTag(&key,&value)) {
+      ftype = find_feature_kv(features, key, value);
+      if (ftype > 0) return ftype;
+    }
+    return 0;
   }
 };

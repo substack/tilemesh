@@ -15,14 +15,15 @@ function enumc () {
     #include <map>
     #include <stdint.h>
 
-    struct tilemesh_cmp_str {
+    namespace tilemesh {
+    struct cmp_str {
       bool operator()(char const *a, char const *b) {
         return strcmp(a, b) < 0;
       }
     };
-    typedef std::map<const char *,size_t,tilemesh_cmp_str> TilemeshFeatures;
-    typedef std::map<const char *,size_t,tilemesh_cmp_str>::const_iterator TilemeshFeaturesIterator;
-    void tilemesh_load_features (TilemeshFeatures *features) {
+    typedef std::map<const char *,size_t,cmp_str> Features;
+    typedef std::map<const char *,size_t,cmp_str>::const_iterator FeaturesIterator;
+    void load_features (Features *features) {
   `.replace(/^ {4}/mg,'').trim()+'\n')
   return stream
   function write (row, enc, next) {
@@ -40,6 +41,7 @@ function enumc () {
     var catstr = '"' + cat+'"'
     this.push(`
         (*features)[${catstr}] = ${n++};
+      };
       };
       #endif
     `.replace(/^ {6}/mg,'').replace(/^\s*\n|\s*$/g,'') + '\n')

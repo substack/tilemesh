@@ -3,14 +3,15 @@
 #include <map>
 #include <stdint.h>
 
-struct tilemesh_cmp_str {
+namespace tilemesh {
+struct cmp_str {
   bool operator()(char const *a, char const *b) {
     return strcmp(a, b) < 0;
   }
 };
-typedef std::map<const char *,size_t,tilemesh_cmp_str> TilemeshFeatures;
-typedef std::map<const char *,size_t,tilemesh_cmp_str>::const_iterator TilemeshFeaturesIterator;
-void tilemesh_load_features (TilemeshFeatures *features) {
+typedef std::map<const char *,size_t,cmp_str> Features;
+typedef std::map<const char *,size_t,cmp_str>::const_iterator FeaturesIterator;
+void load_features (Features *features) {
   (*features)["aerialway.cable_car"] = 1;
   (*features)["aerialway.canopy"] = 2;
   (*features)["aerialway.chair_lift"] = 3;
@@ -509,5 +510,6 @@ void tilemesh_load_features (TilemeshFeatures *features) {
   (*features)["waterway.water_point"] = 496;
   (*features)["waterway.weir"] = 497;
   (*features)["waterway"] = 498;
+};
 };
 #endif
