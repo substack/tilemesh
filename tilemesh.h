@@ -11,20 +11,20 @@ namespace Tilemesh {
   };
   template<class T> struct List {
     size_t length;
-    ListItem<T> *head;
-    ListItem<T> *tail;
+    ListItem<T> *first;
+    ListItem<T> *last;
     List () {
       length = 0;
-      head = NULL;
-      tail = NULL;
+      first = NULL;
+      last = NULL;
     }
     void push (T* p) {
       ListItem<T> *item = new ListItem<T>(p);
-      if (!head) head = item;
-      if (tail) {
-        tail->next = item;
+      if (!first) first = item;
+      if (last) {
+        last->next = item;
       }
-      tail = item;
+      last = item;
       length++;
     }
   };
@@ -45,32 +45,51 @@ namespace Tilemesh {
       lon = _lon;
       lat = _lat;
     }
+    bool operator==(Position &p) {
+      return lon == p.lon && lat == p.lat;
+    }
   };
   struct Line {
     uint64_t id;
     uint16_t type;
-    size_t length;
-    Position *positions;
+    List<Position> *positions;
+    Line (uint64_t _id, uint16_t _type, List<Position> *poslist) {
+      id = _id;
+      type = _type;
+      positions = poslist;
+    }
   };
   struct Outline {
     uint64_t id;
     uint16_t type;
-    size_t length;
-    Position *positions;
+    List<Position> *positions;
+    Outline (uint64_t _id, uint16_t _type, List<Position> *poslist) {
+      id = _id;
+      type = _type;
+      positions = poslist;
+    }
   };
   struct Cell {
     uint32_t i;
     uint32_t j;
     uint32_t k;
+    Cell (uint32_t _i, uint32_t _j, uint32_t _k) {
+      i = _i;
+      j = _j;
+      k = _k;
+    }
   };
   struct Area {
     uint64_t id;
     uint16_t type;
-    List<Position> positions;
-    List<Cell> cells;
-    Area (uint64_t _id, uint16_t _type) {
+    List<Position> *positions;
+    List<Cell> *cells;
+    Area (uint64_t _id, uint16_t _type,
+    List<Position> *plist, List<Cell> *clist) {
       id = _id;
       type = _type;
+      positions = plist;
+      cells = clist;
     }
   };
   struct Data {
@@ -81,4 +100,8 @@ namespace Tilemesh {
     Data () {
     }
   };
+  void triangulate (List<Position> *outplist, List<Cell> *outclist,
+  List<Position> *inplist) {
+    // TODO
+  }
 };

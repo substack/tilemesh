@@ -41,17 +41,21 @@ int main (int argc, char **argv) {
   char *table = (char*) malloc(256*15000);
   o5mdecoder::Decoder d(dbuf,16384,table);
 
-  Tilemesh::Data tdata;
-
   uint64_t ref;
   std::map<uint64_t,Tilemesh::Position*> nodes;
   std::map<uint64_t,Tilemesh::Position*>::const_iterator ipt;
-  Tilemesh::Position *pos;
-  Tilemesh::Point *pt;
 
   TilemeshFeatures features;
   tilemesh_load_features(&features);
+  Tilemesh::Data tdata;
+  Tilemesh::Position *pos;
+  Tilemesh::Point *pt;
   Tilemesh::Area *area;
+  Tilemesh::Line *line;
+  Tilemesh::Outline *outline;
+  Tilemesh::List<Tilemesh::Position> *poslist;
+  Tilemesh::List<Tilemesh::Position> *aplist;
+  Tilemesh::List<Tilemesh::Cell> *aclist;
 
   size_t len, ftype;
   do {
@@ -67,16 +71,25 @@ int main (int argc, char **argv) {
           nodes[d.node->id] = pos;
         } else if (d.way) {
           ftype = find_feature(&features, d.way);
-          area = new Tilemesh::Area(d.way->id, ftype);
-          tdata.areas.push(area);
-          // add points
+          poslist = new Tilemesh::List<Tilemesh::Position>;
           while (d.way->getRef(&ref)) {
             ipt = nodes.find(ref);
             if (ipt == nodes.end()) continue;
-            area->positions.push(ipt->second);
+            poslist->push(ipt->second);
           }
-          // add cells
-          // ...
+          if (poslist->length >= 2
+          && poslist->first->data == poslist->last->data) { // closed, area
+            outline = new Tilemesh::Outline(d.way->id, ftype, poslist);
+            tdata.outlines.push(outline);
+            aplist = new Tilemesh::List<Tilemesh::Position>;
+            aclist = new Tilemesh::List<Tilemesh::Cell>;
+            Tilemesh::triangulate(aplist,aclist,poslist);
+            area = new Tilemesh::Area(d.way->id, ftype, aplist, aclist);
+            tdata.areas.push(area);
+          } else { // open, line
+            line = new Tilemesh::Line(d.way->id, ftype, poslist);
+            tdata.lines.push(line);
+          }
         }
       }
     } catch (char *err) {
