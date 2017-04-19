@@ -2,6 +2,7 @@
 #define TILEMESH_FEATURES_H
 #include <map>
 #include <stdint.h>
+#include <string.h>
 
 namespace tilemesh {
 struct cmp_str {

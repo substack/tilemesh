@@ -1,3 +1,8 @@
+#ifndef TILEMESH_H
+#define TILEMESH_H
+#include <stdint.h>
+#include <stdlib.h>
+#include <map>
 #include <o5mdecoder.h>
 #include <tilemesh_features.h>
 
@@ -132,4 +137,63 @@ namespace tilemesh {
     }
     return 0;
   }
+  struct Writer {
+    char *data, *dbuf, *table;
+    o5mdecoder::Decoder *decoder;
+    uint64_t ref;
+    std::map<uint64_t,tilemesh::Position*> nodes;
+    std::map<uint64_t,tilemesh::Position*>::const_iterator ipt;
+    tilemesh::Features features;
+    tilemesh::Data tdata;
+    tilemesh::Position *pos;
+    tilemesh::Point *pt;
+    tilemesh::Area *area;
+    tilemesh::Line *line;
+    tilemesh::Outline *outline;
+    tilemesh::List<tilemesh::Position> *poslist;
+    tilemesh::List<tilemesh::Position> *aplist;
+    tilemesh::List<tilemesh::Cell> *aclist;
+    Writer () {
+      dbuf = (char*) malloc(16384);
+      table = (char*) malloc(256*15000);
+      decoder = new o5mdecoder::Decoder(dbuf,16384,table);
+      load_features(&features);
+    }
+    void write (char *data, size_t len) {
+      size_t ftype;
+      decoder->write(data, len);
+      while (decoder->read()) {
+        if (decoder->node) {
+          pt = new tilemesh::Point(decoder->node->id,
+            tilemesh::find_feature(&features, decoder->node),
+            decoder->node->lon, decoder->node->lat);
+          tdata.points.push(pt);
+          pos = new tilemesh::Position(decoder->node->lon, decoder->node->lat);
+          nodes[decoder->node->id] = pos;
+        } else if (decoder->way) {
+          ftype = tilemesh::find_feature(&features, decoder->way);
+          poslist = new tilemesh::List<tilemesh::Position>;
+          while (decoder->way->getRef(&ref)) {
+            ipt = nodes.find(ref);
+            if (ipt == nodes.end()) continue;
+            poslist->push(ipt->second);
+          }
+          if (poslist->length >= 2
+          && poslist->first->data == poslist->last->data) { // closed, area
+            outline = new tilemesh::Outline(decoder->way->id, ftype, poslist);
+            tdata.outlines.push(outline);
+            aplist = new tilemesh::List<tilemesh::Position>;
+            aclist = new tilemesh::List<tilemesh::Cell>;
+            tilemesh::triangulate(aplist,aclist,poslist);
+            area = new tilemesh::Area(decoder->way->id, ftype, aplist, aclist);
+            tdata.areas.push(area);
+          } else { // open, line
+            line = new tilemesh::Line(decoder->way->id, ftype, poslist);
+            tdata.lines.push(line);
+          }
+        }
+      }
+    }
+  };
 };
+#endif
