@@ -43,6 +43,7 @@ struct Point {
   uint64_t id;
   uint16_t type;
   float lon, lat;
+  static const size_t size = 18;
   Point (uint64_t _id, uint16_t _type, float _lon, float _lat) {
     id = _id;
     type = _type;
@@ -65,6 +66,7 @@ struct Point {
 };
 struct Position {
   float lon, lat;
+  static const size_t size = 8;
   Position (float _lon, float _lat) {
     lon = _lon;
     lat = _lat;
@@ -72,25 +74,34 @@ struct Position {
   bool operator==(Position &p) {
     return lon == p.lon && lat == p.lat;
   }
+  size_t write (char *dst) {
+    size_t pos = 0;
+    *(uint32_t*)(dst+pos) = htobe32(*((uint32_t*)&lon));
+    pos += sizeof(float);
+    *(uint32_t*)(dst+pos) = htobe32(*((uint32_t*)&lat));
+    pos += sizeof(float);
+    return pos;
+  }
 };
 struct Line {
   uint64_t id;
   uint16_t type;
   List<Position> *positions;
+  static const size_t size = 12;
   Line (uint64_t _id, uint16_t _type, List<Position> *poslist) {
     id = _id;
     type = _type;
     positions = poslist;
   }
-};
-struct Outline {
-  uint64_t id;
-  uint16_t type;
-  List<Position> *positions;
-  Outline (uint64_t _id, uint16_t _type, List<Position> *poslist) {
-    id = _id;
-    type = _type;
-    positions = poslist;
+  size_t write (char *dst) {
+    size_t pos = 0;
+    *(uint64_t*)(dst+pos) = htobe64(id);
+    pos += sizeof(uint64_t);
+    *(uint16_t*)(dst+pos) = htobe16(type);
+    pos += sizeof(uint16_t);
+    *(uint16_t*)(dst+pos) = htobe16((uint16_t) positions->length);
+    pos += sizeof(uint16_t);
+    return pos;
   }
 };
 struct Cell {
@@ -119,8 +130,8 @@ struct Area {
 struct Data {
   List<Point> points;
   List<Line> lines;
+  List<Line> outlines;
   List<Area> areas;
-  List<Outline> outlines;
   Data () {
   }
 };
@@ -164,11 +175,14 @@ struct o5m {
   Point *pt;
   Area *area;
   Line *line;
-  Outline *outline;
+  Line *outline;
   List<Position> *poslist;
   List<Position> *aplist;
   List<Cell> *aclist;
   ListItem<Point> *ipoint;
+  ListItem<Position> *ipos;
+  ListItem<Line> *iline;
+  ListItem<Area> *iarea;
 
   size_t readpos, readnum;
   uint16_t readstage;
@@ -201,7 +215,7 @@ struct o5m {
         }
         if (poslist->length >= 2
         && poslist->first->data == poslist->last->data) { // closed, area
-          outline = new Outline(decoder->way->id, ftype, poslist);
+          outline = new Line(decoder->way->id, ftype, poslist);
           tdata.outlines.push(outline);
           aplist = new List<Position>;
           aclist = new List<Cell>;
@@ -240,17 +254,69 @@ struct o5m {
           *outlen = (pos += sizeof(uint32_t));
           readstage++;
           ipoint = tdata.points.first;
-          //memcpy(data+pos,(char*) &(ipoint->data), sizeof(Point));
-          //*outlen = (pos += sizeof(Point));
           break;
         case 3: // point data
           if (ipoint == NULL) {
             readstage++;
             continue;
           }
-          if (len-pos < sizeof(Point)) return true;
+          if (len-pos < Point::size) return true;
           *outlen = (pos += ipoint->data->write(data+pos));
           ipoint = ipoint->next;
+          break;
+        case 4: // line length
+          if (len-pos < sizeof(uint32_t)) return true;
+          *(uint32_t*)(data+pos) = htobe32((uint32_t) tdata.lines.length);
+          *outlen = (pos += sizeof(uint32_t));
+          readstage++;
+          iline = tdata.lines.first;
+          break;
+        case 5: // line data
+          if (iline == NULL) {
+            readstage = 7;
+            continue;
+          }
+          if (len-pos < Line::size) return true;
+          *outlen = (pos += iline->data->write(data+pos));
+          ipos = iline->data->positions->first;
+          readstage++;
+          break;
+        case 6: // line point
+          if (ipos == NULL) {
+            readstage = 5;
+            iline = iline->next;
+            continue;
+          }
+          if (len-pos < Position::size) return true;
+          *outlen = (pos += ipos->data->write(data+pos));
+          ipos = ipos->next;
+          break;
+        case 7: // outline length
+          if (len-pos < sizeof(uint32_t)) return true;
+          *(uint32_t*)(data+pos) = htobe32((uint32_t) tdata.outlines.length);
+          *outlen = (pos += sizeof(uint32_t));
+          readstage++;
+          iline = tdata.outlines.first;
+          break;
+        case 8: // outline data
+          if (iline == NULL) {
+            readstage = 10;
+            continue;
+          }
+          if (len-pos < Line::size) return true;
+          *outlen = (pos += iline->data->write(data+pos));
+          ipos = iline->data->positions->first;
+          readstage++;
+          break;
+        case 9: // outline point
+          if (ipos == NULL) {
+            readstage = 8;
+            iline = iline->next;
+            continue;
+          }
+          if (len-pos < Position::size) return true;
+          *outlen = (pos += ipos->data->write(data+pos));
+          ipos = ipos->next;
           break;
         default:
           return false;
