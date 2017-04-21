@@ -108,10 +108,21 @@ struct Cell {
   uint32_t i;
   uint32_t j;
   uint32_t k;
+  static const size_t size = 12;
   Cell (uint32_t _i, uint32_t _j, uint32_t _k) {
     i = _i;
     j = _j;
     k = _k;
+  }
+  size_t write (char *dst) {
+    size_t pos = 0;
+    *(uint32_t*)(dst+pos) = htobe32(i);
+    pos += sizeof(uint32_t);
+    *(uint32_t*)(dst+pos) = htobe32(j);
+    pos += sizeof(uint32_t);
+    *(uint32_t*)(dst+pos) = htobe32(k);
+    pos += sizeof(uint32_t);
+    return pos;
   }
 };
 struct Area {
@@ -119,12 +130,25 @@ struct Area {
   uint16_t type;
   List<Position> *positions;
   List<Cell> *cells;
+  static const size_t size = 14;
   Area (uint64_t _id, uint16_t _type,
   List<Position> *plist, List<Cell> *clist) {
     id = _id;
     type = _type;
     positions = plist;
     cells = clist;
+  }
+  size_t write (char *dst) {
+    size_t pos = 0;
+    *(uint64_t*)(dst+pos) = htobe64(id);
+    pos += sizeof(uint64_t);
+    *(uint16_t*)(dst+pos) = htobe16(type);
+    pos += sizeof(uint16_t);
+    *(uint16_t*)(dst+pos) = htobe16((uint16_t) positions->length);
+    pos += sizeof(uint16_t);
+    *(uint16_t*)(dst+pos) = htobe16((uint16_t) cells->length);
+    pos += sizeof(uint16_t);
+    return pos;
   }
 };
 struct Data {
@@ -181,6 +205,7 @@ struct o5m {
   List<Cell> *aclist;
   ListItem<Point> *ipoint;
   ListItem<Position> *ipos;
+  ListItem<Cell> *icell;
   ListItem<Line> *iline;
   ListItem<Area> *iarea;
 
@@ -317,6 +342,42 @@ struct o5m {
           if (len-pos < Position::size) return true;
           *outlen = (pos += ipos->data->write(data+pos));
           ipos = ipos->next;
+          break;
+        case 10: // area length
+          if (len-pos < sizeof(uint32_t)) return true;
+          *(uint32_t*)(data+pos) = htobe32((uint32_t) tdata.areas.length);
+          *outlen = (pos += sizeof(uint32_t));
+          readstage++;
+          iarea = tdata.areas.first;
+          break;
+        case 11: // area data
+          if (iarea == NULL) {
+            readstage = 14;
+            continue;
+          }
+          if (len-pos < Area::size) return true;
+          *outlen = (pos += iarea->data->write(data+pos));
+          ipos = iarea->data->positions->first;
+          readstage++;
+          break;
+        case 12: // area point
+          if (ipos == NULL) {
+            readstage++;
+            continue;
+          }
+          if (len-pos < Position::size) return true;
+          *outlen = (pos += ipos->data->write(data+pos));
+          ipos = ipos->next;
+          break;
+        case 13: // area cell
+          if (icell == NULL) {
+            readstage = 11;
+            iarea = iarea->next;
+            continue;
+          }
+          if (len-pos < Cell::size) return true;
+          *outlen = (pos += icell->data->write(data+pos));
+          icell = icell->next;
           break;
         default:
           return false;
