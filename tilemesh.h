@@ -3,8 +3,10 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <map>
-#include <o5mdecoder.h>
+#include <vector>
 #include <tilemesh_features.h>
+#include <o5mdecoder/o5mdecoder.h>
+#include <earcut.hpp>
 #include <endian.h>
 
 namespace tilemesh {
@@ -12,6 +14,9 @@ namespace tilemesh {
 const char magic[11] = "TILEMESH\n\0";
 const char version[256] = "1.0.0\n\0";
 static char tmp[256];
+static double ptx[512];
+static double pty[512];
+
 template<class T> struct ListItem {
   T *data;
   ListItem<T> *next;
@@ -159,9 +164,23 @@ struct Data {
   Data () {
   }
 };
-void triangulate (List<Position> *outplist, List<Cell> *outclist,
-List<Position> *inplist) {
-  // TODO
+void triangulate (List<Cell> *outclist, List<Position> *inplist) {
+  std::vector<std::vector<std::array<float,2>>> polygon;
+  std::vector<std::array<float,2>> first;
+  polygon.push_back(first);
+  ListItem<Position> *ipos = inplist->first;
+  std::array<float,2> apt;
+  while (ipos != NULL) {
+    apt = { ipos->data->lon, ipos->data->lat };
+    polygon[0].push_back(apt);
+    ipos = ipos->next;
+  }
+  std::vector<uint16_t> cells = mapbox::earcut<uint16_t>(polygon);
+  std::array<float,2> *pt;
+  size_t len = cells.size();
+  for (size_t i = 0; i < len; i+=3) {
+    outclist->push(new Cell(cells[i+0], cells[i+1], cells[i+2]));
+  }
 }
 size_t find_feature_kv (Features *features, char *key, char *value) {
   FeaturesIterator ti;
@@ -201,7 +220,6 @@ struct o5m {
   Line *line;
   Line *outline;
   List<Position> *poslist;
-  List<Position> *aplist;
   List<Cell> *aclist;
   ListItem<Point> *ipoint;
   ListItem<Position> *ipos;
@@ -242,10 +260,9 @@ struct o5m {
         && poslist->first->data == poslist->last->data) { // closed, area
           outline = new Line(decoder->way->id, ftype, poslist);
           tdata.outlines.push(outline);
-          aplist = new List<Position>;
           aclist = new List<Cell>;
-          triangulate(aplist,aclist,poslist);
-          area = new Area(decoder->way->id, ftype, aplist, aclist);
+          triangulate(aclist,poslist);
+          area = new Area(decoder->way->id, ftype, poslist, aclist);
           tdata.areas.push(area);
         } else { // open, line
           line = new Line(decoder->way->id, ftype, poslist);
