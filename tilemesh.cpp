@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <tilemesh.h>
+#include <tilemesh.hpp>
 
 int main (int argc, char **argv) {
   char *data = (char*) malloc(4096);

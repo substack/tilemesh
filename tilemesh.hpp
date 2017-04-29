@@ -1,12 +1,12 @@
-#ifndef TILEMESH_H
-#define TILEMESH_H
+#ifndef TILEMESH_HPP
+#define TILEMESH_HPP
 #include <stdint.h>
 #include <stdlib.h>
 #include <map>
 #include <vector>
-#include <tilemesh_features.h>
-#include <o5mdecoder/o5mdecoder.h>
-#include <earcut.hpp>
+#include <tilemesh_features.hpp>
+#include <vendor/o5mdecoder.hpp>
+#include <vendor/earcut.hpp>
 #include <endian.h>
 
 namespace tilemesh {

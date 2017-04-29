@@ -1,5 +1,5 @@
-#ifndef TILEMESH_FEATURES_H
-#define TILEMESH_FEATURES_H
+#ifndef TILEMESH_FEATURES_HPP
+#define TILEMESH_FEATURES_HPP
 #include <map>
 #include <stdint.h>
 #include <string.h>
