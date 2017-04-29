@@ -17,6 +17,21 @@ static char tmp[256];
 static double ptx[512];
 static double pty[512];
 
+enum STAGES {
+  MAGIC_STAGE = 0,
+  VERSION_STAGE = 1,
+  PTLEN_STAGE = 2,
+  PTDATA_STAGE = 3,
+  LINELEN_STAGE = 4,
+  LINEDATA_STAGE = 5,
+  LINEPT_STAGE = 6,
+  AREALEN_STAGE = 7,
+  AREADATA_STAGE = 8,
+  AREAPT_STAGE = 9,
+  AREACELL_STAGE = 10,
+  FINAL_STAGE = 11
+};
+
 template<class T> struct ListItem {
   T *data;
   ListItem<T> *next;
@@ -272,56 +287,56 @@ struct o5m {
     *outlen = 0;
     while (true) {
       switch (readstage) {
-        case 0:
+        case MAGIC_STAGE:
           n = strlen(magic);
           if (len-pos < n) return true;
           strncpy(data+pos, magic, n);
           *outlen = (pos += n);
-          readstage++;
+          readstage = VERSION_STAGE;
           break;
-        case 1:
+        case VERSION_STAGE:
           n = strlen(version);
           if (len-pos < n) return true;
           strncpy(data+pos, version, n);
           *outlen = (pos += n);
-          readstage++;
+          readstage = PTLEN_STAGE;
           break;
-        case 2: // point length
+        case PTLEN_STAGE: // point length
           if (len-pos < sizeof(uint32_t)) return true;
           *(uint32_t*)(data+pos) = htobe32((uint32_t) tdata.points.length);
           *outlen = (pos += sizeof(uint32_t));
-          readstage++;
+          readstage = PTDATA_STAGE;
           ipoint = tdata.points.first;
           break;
-        case 3: // point data
+        case PTDATA_STAGE: // point data
           if (ipoint == NULL) {
-            readstage++;
+            readstage = LINELEN_STAGE;
             continue;
           }
           if (len-pos < Point::size) return true;
           *outlen = (pos += ipoint->data->write(data+pos));
           ipoint = ipoint->next;
           break;
-        case 4: // line length
+        case LINELEN_STAGE: // line length
           if (len-pos < sizeof(uint32_t)) return true;
           *(uint32_t*)(data+pos) = htobe32((uint32_t) tdata.lines.length);
           *outlen = (pos += sizeof(uint32_t));
-          readstage++;
+          readstage = LINEDATA_STAGE;
           iline = tdata.lines.first;
           break;
-        case 5: // line data
+        case LINEDATA_STAGE: // line data
           if (iline == NULL) {
-            readstage = 7;
+            readstage = AREALEN_STAGE;
             continue;
           }
           if (len-pos < Line::size) return true;
           *outlen = (pos += iline->data->write(data+pos));
           ipos = iline->data->positions->first;
-          readstage++;
+          readstage = LINEPT_STAGE;
           break;
-        case 6: // line point
+        case LINEPT_STAGE: // line point
           if (ipos == NULL) {
-            readstage = 5;
+            readstage = LINEDATA_STAGE;
             iline = iline->next;
             continue;
           }
@@ -329,16 +344,16 @@ struct o5m {
           *outlen = (pos += ipos->data->write(data+pos));
           ipos = ipos->next;
           break;
-        case 7: // area length
+        case AREALEN_STAGE: // area length
           if (len-pos < sizeof(uint32_t)) return true;
           *(uint32_t*)(data+pos) = htobe32((uint32_t) tdata.areas.length);
           *outlen = (pos += sizeof(uint32_t));
-          readstage++;
+          readstage = AREADATA_STAGE;
           iarea = tdata.areas.first;
           break;
-        case 8: // area data
+        case AREADATA_STAGE: // area data
           if (iarea == NULL) {
-            readstage = 11;
+            readstage = FINAL_STAGE;
             continue;
           }
           if (len-pos < Area::size) return true;
@@ -346,9 +361,9 @@ struct o5m {
           ipos = iarea->data->positions->first;
           readstage++;
           break;
-        case 9: // area point
+        case AREAPT_STAGE: // area point
           if (ipos == NULL) {
-            readstage++;
+            readstage = AREACELL_STAGE;
             icell = iarea->data->cells->first;
             continue;
           }
@@ -356,9 +371,9 @@ struct o5m {
           *outlen = (pos += ipos->data->write(data+pos));
           ipos = ipos->next;
           break;
-        case 10: // area cell
+        case AREACELL_STAGE: // area cell
           if (icell == NULL) {
-            readstage = 8;
+            readstage = AREADATA_STAGE;
             iarea = iarea->next;
             continue;
           }
@@ -366,6 +381,7 @@ struct o5m {
           *outlen = (pos += icell->data->write(data+pos));
           icell = icell->next;
           break;
+        case FINAL_STAGE:
         default:
           return false;
           break;
