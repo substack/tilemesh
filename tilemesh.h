@@ -159,7 +159,6 @@ struct Area {
 struct Data {
   List<Point> points;
   List<Line> lines;
-  List<Line> outlines;
   List<Area> areas;
   Data () {
   }
@@ -218,7 +217,6 @@ struct o5m {
   Point *pt;
   Area *area;
   Line *line;
-  Line *outline;
   List<Position> *poslist;
   List<Cell> *aclist;
   ListItem<Point> *ipoint;
@@ -258,8 +256,6 @@ struct o5m {
         }
         if (poslist->length >= 2
         && poslist->first->data == poslist->last->data) { // closed, area
-          outline = new Line(decoder->way->id, ftype, poslist);
-          tdata.outlines.push(outline);
           aclist = new List<Cell>;
           triangulate(aclist,poslist);
           area = new Area(decoder->way->id, ftype, poslist, aclist);
@@ -333,43 +329,16 @@ struct o5m {
           *outlen = (pos += ipos->data->write(data+pos));
           ipos = ipos->next;
           break;
-        case 7: // outline length
-          if (len-pos < sizeof(uint32_t)) return true;
-          *(uint32_t*)(data+pos) = htobe32((uint32_t) tdata.outlines.length);
-          *outlen = (pos += sizeof(uint32_t));
-          readstage++;
-          iline = tdata.outlines.first;
-          break;
-        case 8: // outline data
-          if (iline == NULL) {
-            readstage = 10;
-            continue;
-          }
-          if (len-pos < Line::size) return true;
-          *outlen = (pos += iline->data->write(data+pos));
-          ipos = iline->data->positions->first;
-          readstage++;
-          break;
-        case 9: // outline point
-          if (ipos == NULL) {
-            readstage = 8;
-            iline = iline->next;
-            continue;
-          }
-          if (len-pos < Position::size) return true;
-          *outlen = (pos += ipos->data->write(data+pos));
-          ipos = ipos->next;
-          break;
-        case 10: // area length
+        case 7: // area length
           if (len-pos < sizeof(uint32_t)) return true;
           *(uint32_t*)(data+pos) = htobe32((uint32_t) tdata.areas.length);
           *outlen = (pos += sizeof(uint32_t));
           readstage++;
           iarea = tdata.areas.first;
           break;
-        case 11: // area data
+        case 8: // area data
           if (iarea == NULL) {
-            readstage = 14;
+            readstage = 11;
             continue;
           }
           if (len-pos < Area::size) return true;
@@ -377,7 +346,7 @@ struct o5m {
           ipos = iarea->data->positions->first;
           readstage++;
           break;
-        case 12: // area point
+        case 9: // area point
           if (ipos == NULL) {
             readstage++;
             icell = iarea->data->cells->first;
@@ -387,9 +356,9 @@ struct o5m {
           *outlen = (pos += ipos->data->write(data+pos));
           ipos = ipos->next;
           break;
-        case 13: // area cell
+        case 10: // area cell
           if (icell == NULL) {
-            readstage = 11;
+            readstage = 8;
             iarea = iarea->next;
             continue;
           }
