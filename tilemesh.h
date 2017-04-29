@@ -380,6 +380,7 @@ struct o5m {
         case 12: // area point
           if (ipos == NULL) {
             readstage++;
+            icell = iarea->data->cells->first;
             continue;
           }
           if (len-pos < Position::size) return true;
