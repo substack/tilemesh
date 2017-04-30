@@ -125,23 +125,23 @@ struct Line {
   }
 };
 struct Cell {
-  uint32_t i;
-  uint32_t j;
-  uint32_t k;
-  static const size_t size = 12;
-  Cell (uint32_t _i, uint32_t _j, uint32_t _k) {
+  uint16_t i;
+  uint16_t j;
+  uint16_t k;
+  static const size_t size = 6;
+  Cell (uint16_t _i, uint16_t _j, uint16_t _k) {
     i = _i;
     j = _j;
     k = _k;
   }
   size_t write (char *dst) {
     size_t pos = 0;
-    *(uint32_t*)(dst+pos) = htobe32(i);
-    pos += sizeof(uint32_t);
-    *(uint32_t*)(dst+pos) = htobe32(j);
-    pos += sizeof(uint32_t);
-    *(uint32_t*)(dst+pos) = htobe32(k);
-    pos += sizeof(uint32_t);
+    *(uint16_t*)(dst+pos) = htobe16(i);
+    pos += sizeof(uint16_t);
+    *(uint16_t*)(dst+pos) = htobe16(j);
+    pos += sizeof(uint16_t);
+    *(uint16_t*)(dst+pos) = htobe16(k);
+    pos += sizeof(uint16_t);
     return pos;
   }
 };
