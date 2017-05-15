@@ -48,28 +48,30 @@ $ peermaps data -f o5m -155.5 19.53 -149.5 19.60 | tilemesh > output.tilemesh
 * version (newline-delimited string, up to 256 bytes) "1.0.0\n"
 
 * number of points (4 bytes, `uint32_t` big endian)
-** point.id (8 bytes, `uint64_t` big endian)
-** point.type (2 bytes, `uint16_t` big endian)
-** point.lon (4 bytes, `float32` big endian)
-** point.lat (4 bytes, `float32` big endian)
+* point.id (8 bytes, `uint64_t` big endian)
+* point.type (2 bytes, `uint16_t` big endian)
+* point.lon (4 bytes, `float32` big endian)
+* point.lat (4 bytes, `float32` big endian)
 
 * number of lines (4 bytes, `uint32_t` big endian)
-** line.id (8 bytes, `uint64_t` big endian)
-** line.type (2 bytes, `uint16_t` big endian)
-** number of line.positions (2 bytes, `uint16_t` big endian)
-*** position.lon (4 bytes, `float32` big endian)
-*** position.lat (4 bytes, `float32` big endian)
+* line.id (8 bytes, `uint64_t` big endian)
+* line.type (2 bytes, `uint16_t` big endian)
+
+* number of line.positions (2 bytes, `uint16_t` big endian)
+* position.lon (4 bytes, `float32` big endian)
+* position.lat (4 bytes, `float32` big endian)
 
 * number of areas (4 bytes, `uint32_t` big endian)
-** area.id - (8 bytes, `uint64_t` big endian)
-** area.type - (2 bytes, `uint16_t` big endian)
-** number of area.positions (2 bytes, `uint16_t` big endian)
-** number of area.cells (2 bytes, `uint16_t` big endian)
-*** position.lon (4 bytes, `float32` big endian)
-*** position.lat (4 bytes, `float32` big endian)
-*** cell.i (2 bytes, `uint16_t` big endian)
-*** cell.j (2 bytes, `uint16_t` big endian)
-*** cell.k (2 bytes, `uint16_t` big endian)
+* area.id - (8 bytes, `uint64_t` big endian)
+* area.type - (2 bytes, `uint16_t` big endian)
+* number of area.positions (2 bytes, `uint16_t` big endian)
+
+* number of area.cells (2 bytes, `uint16_t` big endian)
+* position.lon (4 bytes, `float32` big endian)
+* position.lat (4 bytes, `float32` big endian)
+* cell.i (2 bytes, `uint16_t` big endian)
+* cell.j (2 bytes, `uint16_t` big endian)
+* cell.k (2 bytes, `uint16_t` big endian)
 
 For each area, all of the positions are listed followed by all of the cells.
 The points in each area retain the original order from the input file.
