@@ -1,70 +1,102 @@
 # tilemesh
 
-work in progress
+gpu-oriented binary map format for webgl/opengl vector tiles
+
+The tilemesh format is designed to be compact over the wire and to run on the
+gpu with minimal (linear time) pre-processing. The format is designed to make
+few assumptions about the final presentation so that the same data can be shared
+on p2p networks for varried use-cases and customizations. The layout of the
+format is created to map directly to GL primitive types so that shader
+attributes and elements can operate on large blocks of memory with a small
+number of draw calls.
+
+As of version 1.0.0, the data format does not specify how text labels should
+work.
+
+# usage
+
+The tilemesh command reads o5m data on stdin and writes tilemesh data on stdout:
+
+``` sh
+$ tilemesh < input.o5m > output.tilemesh
+```
+
+# o5m data
+
+You can turn many kinds of OpenStreetMap data into [o5m data][] using
+[osmconvert][]:
 
 ```
-ipfs cat QmNPkqYfis1XV2CcAyE9ByttxGnvvtVJ4VfFXtbBWnd7fW/2/6/2/6.o5m.gz | gunzip > 6.o5m
-osmconvert 6.o5m --out-pbf | node tomesh.js > 6.json
+$ osmconvert input.osm.pbf --out-o5m | tilemesh > output.tilemesh
+$ osmconvert input.osm.xml --out-o5m | tilemesh > output.tilemesh
 ```
 
-# steps
+You can also download ad-hoc o5m tiles of planet-osm from a bounding box
+(west,east,south,north) using [peermaps][]:
 
-1. parse an o5m file
-2. separate features into points, lines, areas, and outlines
-3. populate vector text atlas with labels
-4. sort separated features by importance
+``` sh
+$ peermaps data -f o5m -155.5 19.53 -149.5 19.60 | tilemesh > output.tilemesh
+```
+
+[osmconvert]: https://wiki.openstreetmap.org/wiki/Osmconvert
+[peermaps]: http://peermaps.org
+[o5m data]: http://wiki.openstreetmap.org/wiki/O5m
 
 # data format
 
-Here is an example:
+* magic number (9 bytes) "TILEMESH\n"
+* version (newline-delimited string, up to 256 bytes) "1.0.0\n"
 
-```
-TILEMESH\n
-1.2.3\n
-```
+* number of points (4 bytes, `uint32_t` big endian)
+** point.id (8 bytes, `uint64_t` big endian)
+** point.type (2 bytes, `uint16_t` big endian)
+** point.lon (4 bytes, `float32` big endian)
+** point.lat (4 bytes, `float32` big endian)
 
-## magic number
+* number of lines (4 bytes, `uint32_t` big endian)
+** line.id (8 bytes, `uint64_t` big endian)
+** line.type (2 bytes, `uint16_t` big endian)
+** number of line.positions (2 bytes, `uint16_t` big endian)
+*** position.lon (4 bytes, `float32` big endian)
+*** position.lat (4 bytes, `float32` big endian)
 
-newline-terminated string (9 bytes): "TILEMESH\n"
+* number of areas (4 bytes, `uint32_t` big endian)
+** area.id - (8 bytes, `uint64_t` big endian)
+** area.type - (2 bytes, `uint16_t` big endian)
+** number of area.positions (2 bytes, `uint16_t` big endian)
+** number of area.cells (2 bytes, `uint16_t` big endian)
+*** position.lon (4 bytes, `float32` big endian)
+*** position.lat (4 bytes, `float32` big endian)
+*** cell.i (2 bytes, `uint16_t` big endian)
+*** cell.j (2 bytes, `uint16_t` big endian)
+*** cell.k (2 bytes, `uint16_t` big endian)
 
-## version
+For each area, all of the positions are listed followed by all of the cells.
+The points in each area retain the original order from the input file.
 
-newline-terminated string: "SEMVER\n"
+Type `uint64_t` integers are generated procedurally from the
+[map_features](OpenStreetMap wiki page on Map_features). You can inspect the
+type values in `src/tilemesh_features.hpp`.
 
-The format of SEMVER is generally "MAJOR.MINOR.PATCH" with MAJOR, MINOR, and
-PATCH as integers expressed in ascii text in the range 0 to 65535, inclusive.
+[map_features]: http://wiki.openstreetmap.org/w/index.php?title=Map_Features
 
-SEMVER may contain additional release information after a dash character "-".
-Be lenient with what you expect here.
+# pre-processing pipeline tips
 
-## lengths
+The categories in the tilemesh data format are designed to correspond to these
+GL primitive types:
 
-newline-terminated string of comma-separated byte lengths for each section:
+* points - `GL_POINTS`
+* lines - `GL_LINE_STRIP`
+* area - `GL_TRIANGLES` for meshes and `GL_LINE_STRIP` for outlines
 
-* points
-* lines
-* areas
-* outlines
-* labels
-* characters
+However some pre-processing is necessary at run time to format the data properly
+first and to add custom attributes.
 
-## points
+To build `GL_LINE_STRIP` geometry,
 
-The number of points is the byte length of this section divided by 18 (8+8+2).
+To give lines width, you can calculate two opposing line normals and store each
+normal as a vec2 in an attribute.
 
-* position - (lon,lat) vec2 tuples (float32be,float32be) (8 bytes)
-* id - uint64be to float32be vec2 (see algorithm below) (8 bytes)
-* type - uint16be (2 bytes)
-
-## lines
-
-Each line is terminated by a point with an id of 0.
-
-* position - (lon,lat) vec2 tuples (float32be,float32be) (8 bytes)
-* id - uint64be represented by a float32be vec2 (see algorithm below) (8 bytes)
-* type - uint16be (2 bytes)
-
-# uint64be to vec2 float32be algorithm
-
-...
+To give area meshes an outline, use the point data in each area to build a line
+strip in addition to a triangle mesh.
 
